@@ -1,7 +1,8 @@
 use std::sync::{Arc, Mutex, PoisonError};
 use std::collections::HashMap;
-use mini_redis::cmd::{Get as GetCommand, Set as SetCommand};
-use mini_redis::frame as redis_frame;
+use mini_redis::cmd as redis_cmd;
+use mini_redis::Command as RedisCommand;
+use mini_redis::frame::Frame;
 use core::fmt;
 use bytes::Bytes;
 
@@ -20,19 +21,27 @@ impl RedisDB {
 		RedisDB { db: Arc::new(Mutex::new(HashMap::new())) }
 	}
 
-	pub fn get(&self, command: GetCommand) -> Result<redis_frame::Frame, RedisError> {
-		let db = self.db.lock()?;
-		if let Some(value) = db.get(command.key()) {
-			Ok(redis_frame::Frame::Bulk(value.clone()))
-		} else {
-			Ok(redis_frame::Frame::Null)
+	pub fn dispatch(&self, frame: Frame) -> Result<Frame, RedisError> {
+		match RedisCommand::from_frame(frame)? {
+			RedisCommand::Set(cmd) => self.set(cmd),
+			RedisCommand::Get(cmd) => self.get(cmd),
+			cmd => return Err(RedisError::new(&format!("invalid cmd: {:?}", cmd))),
 		}
 	}
 
-	pub fn set(&self, command: SetCommand) -> Result<redis_frame::Frame, RedisError> {
+	fn get(&self, command: redis_cmd::Get) -> Result<Frame, RedisError> {
+		let db = self.db.lock()?;
+		if let Some(value) = db.get(command.key()) {
+			Ok(Frame::Bulk(value.clone()))
+		} else {
+			Ok(Frame::Null)
+		}
+	}
+
+	fn set(&self, command: redis_cmd::Set) -> Result<Frame, RedisError> {
 		let mut db = self.db.lock()?;
 		db.insert(command.key().to_string(), command.value().clone());
-		Ok(redis_frame::Frame::Simple("OK".to_string()))
+		Ok(Frame::Simple("OK".to_string()))
 	}
 }
 
