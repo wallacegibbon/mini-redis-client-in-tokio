@@ -314,6 +314,7 @@ dependencies = [
 name = "mini-redis-client-in-tokio"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "mini-redis",
  "tokio",
 ]
