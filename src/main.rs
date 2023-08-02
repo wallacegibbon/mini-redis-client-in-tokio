@@ -5,7 +5,7 @@ use mini_redis_client_in_tokio::{RedisDB, RedisError};
 #[tokio::main]
 async fn main() {
 	let listener = TcpListener::bind("127.0.0.1:6380").await.expect("address is already in use");
-	let db = RedisDB::new();
+	let db = RedisDB::new(10);
 	loop {
 		let (socket, _) = listener.accept().await.expect("accepct error");
 		println!(">>> new connection accepted: {:?}", socket);
