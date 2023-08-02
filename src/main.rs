@@ -19,8 +19,8 @@ async fn main() {
 async fn process(socket: TcpStream, db: RedisDB) -> Result<(), RedisError> {
 	let mut connection = Connection::new(socket);
 	while let Some(frame) = connection.read_frame().await? {
-		let response = db.dispatch(frame);
-		connection.write_frame(&response?).await?;
+		let response = db.dispatch(frame)?;
+		connection.write_frame(&response).await?;
 	}
 	Ok(())
 }
