@@ -8,6 +8,7 @@ async fn main() {
 	let db = RedisDB::new();
 	loop {
 		let (socket, _) = listener.accept().await.expect("accepct error");
+		println!(">>> new connection accepted: {:?}", socket);
 		let db = db.clone();
 		tokio::spawn(async move {
 			process(socket, db).await.expect("unexpected error occured");
